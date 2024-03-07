@@ -1,95 +1,157 @@
-import io
+# Import required libraries
+import os
+import time
 import streamlit as st
 import pandas as pd
-from langchain.agents.agent_types import AgentType
+
+from langchain_openai import OpenAI
 from langchain_experimental.agents.agent_toolkits import create_pandas_dataframe_agent
-from langchain_openai import ChatOpenAI
 from langchain_community.callbacks import StreamlitCallbackHandler
 
-llm = ChatOpenAI(
-    api_key=st.secrets["openai_api_key"].key, temperature=0, streaming=True
+
+def response_generator(response):
+    for word in response.split():
+        yield word + " "
+        time.sleep(0.05)
+
+
+# OpenAIKey
+os.environ["OPENAI_API_KEY"] = api_key = st.secrets["openai_api_key"].key
+
+# Title
+st.title("AI Assistant for Data Science 🤖")
+
+# Welcoming message
+st.write(
+    "Hello, 👋 I am your AI Assistant and I am here to help you with your data science projects."
 )
 
-st.title("AI Assistant for Data Analysis")
-st.header("Exploratory Data Analysis part")
 
+# Initialise the key in session state
 if "clicked" not in st.session_state:
     st.session_state.clicked = {1: False}
 
-# function to display the dataset
 
-
+# Function to udpate the value in session state
 def clicked(button):
     st.session_state.clicked[button] = True
 
 
-st_callback = StreamlitCallbackHandler(
-    st.container(border=True), expand_new_thoughts=True
-)
-
-
-st.button("Let's get started!", on_click=clicked, args=[1])
+st.button("Let's get started", on_click=clicked, args=[1])
 if st.session_state.clicked[1]:
-    st.write("Upload your dataset")
-    file = st.file_uploader("Upload your dataset", type=["csv", "xlsx"])
-    if file is not None:
-        st.write(f"✅ File *{file.name}* uploaded successfully!")
-        loaded_dataframe = pd.read_csv(file, low_memory=False)
+    user_csv = st.file_uploader("Upload your file here", type="csv")
+    if user_csv is not None:
+        user_csv.seek(0)
+        df = pd.read_csv(user_csv, low_memory=False)
 
-        pandas_agent = create_pandas_dataframe_agent(
-            df=loaded_dataframe,
-            llm=llm,
-            agent_type=AgentType.OPENAI_FUNCTIONS,
-        )
+        # llm model
+        llm = OpenAI(temperature=0)
+
+        # Function sidebar
+        @st.cache_data
+        def steps_eda():
+            steps_eda = llm("What are the steps of EDA")
+            return steps_eda
+
+        # Pandas agent
+        pandas_agent = create_pandas_dataframe_agent(llm, df)
+
+        # Functions main
+        @st.cache_data
+        def function_agent():
+            st.write_stream(response_generator("**Data Overview**"))
+            st.write_stream(response_generator(
+                "The first rows of your dataset look like this:"))
+            st.write(df.head())
+            st.subheader("📓 **Data Overview**")
+            columns_df = pandas_agent.run(
+                "What are the meaning of the columns?")
+            st.write(columns_df)
+            missing_values = pandas_agent.run(
+                "How many missing values does this dataframe have? Start the answer with 'There are'"
+            )
+            st.write_stream(response_generator(missing_values))
+
+            duplicates = pandas_agent.run(
+                "Are there any duplicate values and if so where?"
+            )
+            st.write_stream(response_generator(duplicates))
+            correlation_analysis = pandas_agent.run(
+                "Calculate correlations between numerical variables to identify potential relationships."
+            )
+            st.write_stream(response_generator(correlation_analysis))
+            outliers = pandas_agent.run(
+                "Identify outliers in the data that may be erroneous or that may have a significant impact on the analysis."
+            )
+            st.write_stream(response_generator(outliers))
+            new_features = pandas_agent.run(
+                "What new features would be interesting to create?."
+            )
+            st.write_stream(response_generator(new_features))
+            st.write_stream(response_generator(
+                "✅ AI Data Overview completed!"))
+            st.write("**Data Summarisation**")
+            st.write(df.describe())
+            return
 
         @st.cache_data
-        def run_agent():
-            st.subheader("**AI Data Overview**")
-
-            answer = pandas_agent.run(
-                "Describe me the columns please!"
+        def generating_variable_analysis(selected_variable):
+            st.line_chart(df, y=[selected_variable])
+            summary_statistics = pandas_agent.run(
+                f"Give me a summary of the statistics of {
+                    selected_variable}. Make it human readable and in markdown please."
             )
+            st.write_stream(response_generator(summary_statistics))
+            normality = pandas_agent.run(
+                f"Check for normality or specific distribution shapes of {
+                    selected_variable}"
+            )
+            st.write_stream(response_generator(normality))
+            outliers = pandas_agent.run(
+                f"Assess the presence of outliers of {selected_variable}"
+            )
+            st.write_stream(response_generator(outliers))
+            trends = pandas_agent.run(
+                f"Analyse trends, seasonality, and cyclic patterns of {
+                    selected_variable}"
+            )
+            st.write_stream(response_generator(trends))
+            missing_values = pandas_agent.run(
+                f"Determine the extent of missing values of {
+                    selected_variable}"
+            )
+            st.write_stream(response_generator(missing_values))
+            return
 
-            st.write(answer)
+        # Main
 
-            st.subheader("📄 Brief description:")
-            st.write(loaded_dataframe.describe())
+        st.header("Exploratory data analysis")
+        st.subheader("General information about the dataset")
 
-        run_agent()
+        function_agent()
 
+        st.subheader("Variable of study")
 
         non_date_named_columns = [
-            col for col in loaded_dataframe.columns if "Date" not in col
-        ]
+            col for col in df.columns if "Date" not in col]
 
         options = [None] + non_date_named_columns
 
-        variable = st.selectbox(
+        selected_variable = st.selectbox(
             "🤖 Choose a variable so I can analyze it!",
             options=options,
             placeholder="Select a variable",
             index=0,
         )
 
-        def show_chart_and_analysis():
-            answer = pandas_agent.run(
-                f"Describe me following variable and correlations with other variables: {variable}"
-            )
+        if selected_variable is not None and selected_variable != "":
+            generating_variable_analysis(selected_variable=selected_variable)
 
-            st.subheader(f"📊 {variable} variable summary")
+        if selected_variable is not None:
+            st.subheader(
+                "Would you like to ask the AI a question about your data?")
+            if prompt := st.chat_input(max_chars=150):
 
-            st.markdown(answer)
-
-            st.subheader(f"📈 {variable} variable distribution")
-            st.line_chart(loaded_dataframe, y=[variable])
-
-            return answer
-
-        if variable is not None:
-            show_chart_and_analysis()
-
-        if variable is not None:
-            if prompt := st.chat_input():
                 st.chat_message("user").write(prompt)
                 with st.chat_message("assistant"):
                     st_callback = StreamlitCallbackHandler(st.container())
