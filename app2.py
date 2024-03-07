@@ -6,6 +6,7 @@ import pandas as pd
 
 from langchain_openai import OpenAI
 from langchain_experimental.agents.agent_toolkits import create_pandas_dataframe_agent
+from langchain_community.callbacks import StreamlitCallbackHandler
 
 #OpenAIKey
 os.environ['OPENAI_API_KEY'] = api_key=st.secrets["openai_api_key"].key
@@ -67,7 +68,7 @@ if st.session_state.clicked[1]:
             return
 
         @st.cache_data
-        def function_question_variable():
+        def function_question_variable(selected_variable):
             st.line_chart(df, y =[selected_variable])
             summary_statistics = pandas_agent.run(f"Give me a summary of the statistics of {selected_variable}")
             st.write(summary_statistics)
@@ -82,7 +83,7 @@ if st.session_state.clicked[1]:
             return
         
         @st.cache_data
-        def function_question_dataframe():
+        def function_question_dataframe(question):
             dataframe_info = pandas_agent.run(user_question_dataframe)
             st.write(dataframe_info)
             return
@@ -110,14 +111,24 @@ if st.session_state.clicked[1]:
         )
 
         if selected_variable is not None and selected_variable !="":
-            function_question_variable()
+            function_question_variable(selected_variable=selected_variable)
 
             st.subheader('Further study')
 
         if selected_variable:
             user_question_dataframe = st.text_input( "Is there anything else you would like to know about your dataframe?")
-            if user_question_dataframe is not None and user_question_dataframe not in ("","no","No"):
-                function_question_dataframe()
+            if user_question_dataframe is not None:
+                function_question_dataframe(question=user_question_dataframe)
             if user_question_dataframe in ("no", "No"):
                 st.write("")
+
+        if selected_variable is not None:
+            if prompt := st.chat_input():
+                st.chat_message("user").write(prompt)
+                with st.chat_message("assistant"):
+                    st_callback = StreamlitCallbackHandler(st.container())
+                    response = pandas_agent.invoke(
+                        {"input": prompt}, {"callbacks": [st_callback]}
+                    )
+                    st.write(response["output"])
 
