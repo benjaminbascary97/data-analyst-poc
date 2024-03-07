@@ -23,7 +23,7 @@ st.title("AI Assistant for Data Science 🤖")
 
 # Welcoming message
 st.write(
-    "Hello, 👋 I am your AI Assistant and I am here to help you with your data science projects."
+    "Hello, 👋 I am your AI Assistant and I am here to help you analyze data and generate new insights."
 )
 
 
@@ -60,12 +60,12 @@ if st.session_state.clicked[1]:
         @st.cache_data
         def function_agent():
             st.write_stream(response_generator("**Data Overview**"))
-            st.write_stream(response_generator(
-                "The first rows of your dataset look like this:"))
+            st.write_stream(
+                response_generator("The first rows of your dataset look like this:")
+            )
             st.write(df.head())
             st.subheader("📓 **Data Overview**")
-            columns_df = pandas_agent.run(
-                "What are the meaning of the columns?")
+            columns_df = pandas_agent.run("What are the meaning of the columns?")
             st.write(columns_df)
             missing_values = pandas_agent.run(
                 "How many missing values does this dataframe have? Start the answer with 'There are'"
@@ -88,8 +88,7 @@ if st.session_state.clicked[1]:
                 "What new features would be interesting to create?."
             )
             st.write_stream(response_generator(new_features))
-            st.write_stream(response_generator(
-                "✅ AI Data Overview completed!"))
+            st.write_stream(response_generator("✅ AI Data Overview completed!"))
             st.write("**Data Summarisation**")
             st.write(df.describe())
             return
@@ -98,13 +97,11 @@ if st.session_state.clicked[1]:
         def generating_variable_analysis(selected_variable):
             st.line_chart(df, y=[selected_variable])
             summary_statistics = pandas_agent.run(
-                f"Give me a summary of the statistics of {
-                    selected_variable}. Make it human readable and in markdown please."
+                f"Give me a summary of the statistics of {selected_variable}. Make it human readable and in markdown please."
             )
             st.write_stream(response_generator(summary_statistics))
             normality = pandas_agent.run(
-                f"Check for normality or specific distribution shapes of {
-                    selected_variable}"
+                f"Check for normality or specific distribution shapes of {selected_variable}"
             )
             st.write_stream(response_generator(normality))
             outliers = pandas_agent.run(
@@ -112,13 +109,11 @@ if st.session_state.clicked[1]:
             )
             st.write_stream(response_generator(outliers))
             trends = pandas_agent.run(
-                f"Analyse trends, seasonality, and cyclic patterns of {
-                    selected_variable}"
+                f"Analyse trends, seasonality, and cyclic patterns of {selected_variable}"
             )
             st.write_stream(response_generator(trends))
             missing_values = pandas_agent.run(
-                f"Determine the extent of missing values of {
-                    selected_variable}"
+                f"Determine the extent of missing values of {selected_variable}"
             )
             st.write_stream(response_generator(missing_values))
             return
@@ -132,8 +127,7 @@ if st.session_state.clicked[1]:
 
         st.subheader("Variable of study")
 
-        non_date_named_columns = [
-            col for col in df.columns if "Date" not in col]
+        non_date_named_columns = [col for col in df.columns if "Date" not in col]
 
         options = [None] + non_date_named_columns
 
@@ -148,8 +142,7 @@ if st.session_state.clicked[1]:
             generating_variable_analysis(selected_variable=selected_variable)
 
         if selected_variable is not None:
-            st.subheader(
-                "Would you like to ask the AI a question about your data?")
+            st.subheader("Would you like to ask the AI a question about your data?")
             if prompt := st.chat_input(max_chars=150):
 
                 st.chat_message("user").write(prompt)
