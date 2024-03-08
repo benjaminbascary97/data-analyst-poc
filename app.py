@@ -66,11 +66,7 @@ if st.session_state.clicked[1]:
             st.write(df.head())
             st.subheader("📓 **Data Overview**")
             columns_df = pandas_agent.run("What are the meaning of the columns?")
-            st.write(columns_df)
-            missing_values = pandas_agent.run(
-                "How many missing values does this dataframe have? Start the answer with 'There are'"
-            )
-            st.write_stream(response_generator(missing_values))
+            st.write_stream(response_generator(columns_df))
 
             duplicates = pandas_agent.run(
                 "Are there any duplicate values and if so where?"
@@ -80,14 +76,7 @@ if st.session_state.clicked[1]:
                 "Calculate correlations between numerical variables to identify potential relationships."
             )
             st.write_stream(response_generator(correlation_analysis))
-            outliers = pandas_agent.run(
-                "Identify outliers in the data that may be erroneous or that may have a significant impact on the analysis."
-            )
-            st.write_stream(response_generator(outliers))
-            new_features = pandas_agent.run(
-                "What new features would be interesting to create?."
-            )
-            st.write_stream(response_generator(new_features))
+
             st.write_stream(response_generator("✅ AI Data Overview completed!"))
             st.write("**Data Summarisation**")
             st.write(df.describe())
