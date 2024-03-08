@@ -45,7 +45,7 @@ if st.session_state.clicked[1]:
         df = pd.read_csv(user_csv, low_memory=False)
 
         # llm model
-        llm = OpenAI(temperature=0, model="gpt-4-0125-preview", max_tokens=-1)
+        llm = OpenAI(temperature=0, model="gpt-4-0125-preview", max_tokens=4096)
 
         # Function sidebar
         @st.cache_data
