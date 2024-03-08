@@ -45,7 +45,7 @@ if st.session_state.clicked[1]:
         df = pd.read_csv(user_csv, low_memory=False)
 
         # llm model
-        llm = OpenAI(temperature=0)
+        llm = OpenAI(temperature=0, model="gpt-4-0125-preview", max_tokens=-1)
 
         # Function sidebar
         @st.cache_data
@@ -94,17 +94,13 @@ if st.session_state.clicked[1]:
             )
             st.write_stream(response_generator(normality))
             outliers = pandas_agent.run(
-                f"Assess the presence of outliers of {selected_variable}"
+                f"Indicate the outliers of {selected_variable}"
             )
             st.write_stream(response_generator(outliers))
             trends = pandas_agent.run(
-                f"Analyse trends, seasonality, and cyclic patterns of {selected_variable}"
+                f"Analyse trends, and cyclic patterns of {selected_variable}"
             )
             st.write_stream(response_generator(trends))
-            missing_values = pandas_agent.run(
-                f"Determine the extent of missing values of {selected_variable}"
-            )
-            st.write_stream(response_generator(missing_values))
             return
 
         # Main
