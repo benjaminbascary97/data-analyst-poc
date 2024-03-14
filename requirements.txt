@@ -7,7 +7,7 @@ PyDrive2
 oauth2client==4.1.3
 google-api-python-client==2.64.0
 langchain-openai
-langchain
+langchain==1.0.400
 langchain-experimental
 tabulate
 scipy==1.12.0

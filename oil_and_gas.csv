@@ -1,4 +1,4 @@
-Date,Oil volume (m3/day),Volume of liquid (m3/day),Gas volume (m3/day),Water volume (m3/day),Water cut (%) ,Working hours,Dynamic level (m),Reservoir pressure (atm)
+Date,Oilvolume,Volumeofliquid,Gasvolume,Watervolume,Watercut,Workinghours,Dynamiclevel,Reservoirpressure
 2013-01-01,49,70,13055,21,29,24,1819,214
 2013-01-02,49,70,13055,21,29,24,1836,214
 2013-01-03,49,70,13055,21,29,24,1788,214
